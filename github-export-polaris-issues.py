@@ -614,11 +614,6 @@ sarif_tool = {
     }
 }
 
-sarif["runs"] = [
-    {
-        "tool": sarif_tool
-    }
-]
 
 # Now set up results
 sarif_results = []
@@ -656,7 +651,13 @@ for issue in issues:
 
     sarif_results.append(result)
 
-sarif['runs']['results'] = sarif_results
+sarif["runs"] = [
+    {
+        "tool": sarif_tool,
+        "results": sarif_results
+    }
+]
+
 print("SARIF:")
 print(json.dumps(sarif, indent=4))
 
