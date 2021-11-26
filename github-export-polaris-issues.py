@@ -453,6 +453,7 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
                 # JC: Look for remediation advice
                 data = response.payload['data'][0]
                 events = data['events']
+                threadFlows = []
                 for event in events:
                     if (event['event-tag'] == 'remediation'):
                         remediation = event['event-description']
@@ -462,6 +463,15 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
                         main_event_dct = {'main_event': main_event}
                     # Also format codeflows
                     if codeFlows:
+                        threadFlow = {
+                            "file": event['filePath'],
+                            "line": event['line-number'],
+                            "message": f"Event #{event['event-number']} {event['event-tag']}: {event['event-description']}"
+                        }
+                        threadFlows.append(threadFlow)
+
+                if codeFlows:
+                    code_flow_dct = {'codeFlows': threadFlows }
 
                 line = response.payload['data'][0]['main-event-line-number']
             except jsonapi_requests.request_factory.ApiClientError as e:
@@ -495,6 +505,8 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
             entry.update(main_event_dct)
         if source:
             entry.update(source_dct)
+        if codeFlows:
+            entry.update(code_flow_dct)
 
         if (debug >= 5): print(entry)
         dictionary.append(entry)
@@ -544,7 +556,7 @@ latest_run = runs[0]
 
 runId = latest_run['runId']
 
-issues = getIssues(projectId, branchId, runId, events=True, source=True)
+issues = getIssues(projectId, branchId, runId, events=True, source=True, codeFlows=True)
 
 #        entry = {'projectId': projectId, 'branchId': branchId, \
 #             'issue-key': issueKey, 'finding-key': findingKey, \
@@ -647,6 +659,38 @@ for issue in issues:
             }
         }
     ]
+
+    result['codeFlows'] = [
+        {
+            "threadFlows": [
+                {
+                    "locations": []
+                }
+            ]
+        }
+    ]
+
+    for threadFlow in issue['codeFlows']:
+        result['codeFlows'][0]['threadFlows'][0]['locations'].append(
+            {
+                "location": {
+                    "physicalLocation": {
+                        "region": {
+                            "startLine": threadFlow["line"],
+                            "endLine": threadFlow["line"],
+                            "startColumn": 1,
+                            "endColumn": 1
+                        },
+                        "artifactLocation": {
+                            "uri": threadFlow["file"]
+                        }
+                    },
+                    "message": {
+                        "text": threadFlow["message"]
+                    }
+                }
+            }
+        )
 
     result["partialFingerprints"] = {
         "primaryLocationLineHash": issue["finding-key"]
