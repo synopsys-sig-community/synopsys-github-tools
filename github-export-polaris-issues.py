@@ -524,8 +524,15 @@ issueApiUrl = polaris_output['scanInfo']['issueApiUrl']
 projectId = polaris_output['projectInfo']['projectId']
 branchId = polaris_output['projectInfo']['branchId']
 
-token = getJwt(os.getenv("POLARIS_URL"), os.getenv("POLARIS_ACCESS_TOKEN"))
-api = configApi(os.getenv("POLARIS_URL"))
+polaris_url = os.getenv("POLARIS_URL")
+polaris_access_token = os.getenv("POLARIS_ACCESS_TOKEN")
+
+if (polaris_url == None or polaris_access_token == None):
+    print(f"ERROR: Must specifcy POLARIS_URL and POLARIS_ACCESS_TOKEN")
+    sys.exit(1)
+
+token = getJwt(polaris_url, polaris_access_token)
+api = configApi(polaris_url)
 
 print(f"INFO: Fetching issues for project {projectId}")
 
