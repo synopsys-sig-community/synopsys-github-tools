@@ -607,16 +607,19 @@ for issue in issues:
     rule['name'] = issue["checker"]
     rule['shortDescription'] = { "text": issue['name'] }
     rule['fullDescription'] = { "text": issue['description'] + " " + issue['local_effect']}
-    if (issue['severity'] == "high"):
-       rule['defaultConfiguration'] = { "level": "error" }
-    elif (issue['severity'] == "moderate"):
-        rule['defaultConfiguration'] = { "level": "warning" }
-    else:
-        rule['defaultConfiguration'] = { "level": "note" }
     rule['properties'] = {
         "tags": [ "security" ],
         "precision": "very-high"
     }
+    if (issue['severity'] == "high"):
+       rule['defaultConfiguration'] = { "level": "error" }
+       rule['properties']['security-severity'] = "8.9"
+    elif (issue['severity'] == "moderate"):
+        rule['defaultConfiguration'] = { "level": "warning" }
+        rule['properties']['security-severity'] = "6.9"
+    else:
+        rule['defaultConfiguration'] = { "level": "note" }
+        rule['properties']['security-severity'] = "3.9"
 
     sarif_rules.append(rule)
     sarif_checkers[issue["checker"]] = 1
