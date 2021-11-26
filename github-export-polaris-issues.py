@@ -656,7 +656,7 @@ for issue in issues:
 
     sarif_results.append(result)
 
-sarif['results'] = sarif_results
+sarif['runs']['results'] = sarif_results
 print("SARIF:")
 print(json.dumps(sarif, indent=4))
 
