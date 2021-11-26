@@ -206,7 +206,7 @@ def getSource(url, headers, runId, path):
 
     return r.text
 
-def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=False, events=False, source=False):
+def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=False, events=False, source=False, codeFlows=False):
     dictionary = []
     issues_data = []
     issues_included = []
@@ -460,6 +460,9 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
                     if (event['event-type'] == "MAIN"):
                         main_event = event['event-description']
                         main_event_dct = {'main_event': main_event}
+                    # Also format codeflows
+                    if codeFlows:
+
                 line = response.payload['data'][0]['main-event-line-number']
             except jsonapi_requests.request_factory.ApiClientError as e:
                 printError(e)
