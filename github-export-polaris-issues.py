@@ -638,7 +638,12 @@ sarif_results = []
 for issue in issues:
     result = dict()
     result['ruleId'] = issue['checker']
-    result['message'] = { "text": issue['name'] }
+    # get the event and
+    message = f"{issue['main_event']}"
+    if ("remediation" in issue):
+        message = message + f"\n\n{issue['remediation']}"
+    #result['message'] = { "text": issue['name'] }
+    result['message'] = {"text": message}
     if (issue['severity'] == "high"):
        result['level'] = "error"
     elif (issue['severity'] == "moderate"):
