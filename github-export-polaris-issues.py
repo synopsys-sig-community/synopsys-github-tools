@@ -605,8 +605,8 @@ for issue in issues:
     rule = dict()
     rule['id'] = issue["checker"]
     rule['name'] = issue["checker"]
-    rule['shortDescription'] = { "text": issue['local_effect'] }
-    rule['fullDescription'] = { "text": issue['description'] }
+    rule['shortDescription'] = { "text": issue['name'] }
+    rule['fullDescription'] = { "text": issue['description'] + " " + issue['local_effect']}
     if (issue['severity'] == "high"):
        rule['defaultConfiguration'] = { "level": "error" }
     elif (issue['severity'] == "moderate"):
@@ -635,7 +635,7 @@ sarif_results = []
 for issue in issues:
     result = dict()
     result['ruleId'] = issue['checker']
-    result['message'] = { "text": issue['description'] }
+    result['message'] = { "text": issue['name'] }
     if (issue['severity'] == "high"):
        result['level'] = "error"
     elif (issue['severity'] == "moderate"):
