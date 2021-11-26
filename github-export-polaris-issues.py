@@ -606,13 +606,13 @@ for issue in issues:
     rule['id'] = issue["checker"]
     rule['name'] = issue["checker"]
     rule['shortDescription'] = { "text": issue['local_effect'] }
-    rule['fullDescription'] = { "text:": issue['description'] }
+    rule['fullDescription'] = { "text": issue['description'] }
     if (issue['severity'] == "high"):
-       rule['defaultConfiguration'] = "error"
+       rule['defaultConfiguration'] = { "level": "error" }
     elif (issue['severity'] == "moderate"):
-        rule['defaultConfiguration'] = "warning"
+        rule['defaultConfiguration'] = { "level": "warning" }
     else:
-        rule['defaultConfiguration'] = "note"
+        rule['defaultConfiguration'] = { "level": "note" }
     rule['properties'] = {
         "tags": [ "security" ],
         "precision": "very-high"
@@ -652,9 +652,9 @@ for issue in issues:
                 },
                 "region": {
                     "startLine": issue['line'],
-                    "startColumn": 0,
+                    "startColumn": 1,
                     "endLine": issue['line'],
-                    "endColumn": 0
+                    "endColumn": 1
                 }
             }
         }
