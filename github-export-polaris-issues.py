@@ -169,7 +169,44 @@ def getRuns(projectId, branchId, limit=MAX_LIMIT, getCheckers=False):
 
     return dictionary
 
-def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=False, events=False):
+def getEventsWithSource(url, headers, findingId, runId):
+    endpoint = url + '/api/code-analysis/v0/events-with-source'
+    filterPath = ""
+    params = dict([
+        ('run-id',runId),
+        ('finding-key',findingId),
+        ('occurrence-number',1),
+        ('filter-path',filterPath),
+        ('max-depth',10),
+        ('Accept-Language','en')
+        ])
+
+    r = requests.get(endpoint, headers=headers, params=params )
+
+    if r.status_code == 200:
+      return r.json()['data'][0]
+    else:
+      print(f"ERROR: Unable to get events with source for findingId={findingId} in runId={runId}: Error code   {r.status_code}")
+      print(r.text)
+      return None
+
+def getSource(url, headers, runId, path):
+    if (globals.debug): print("DEBUG: getSource(" + url + ", headers, " + runId + ", " + path + ")")
+    endpoint = url + '/api/code-analysis/v0/source-code'
+    params = dict([
+        ('run-id',runId),
+        ('path',path)
+        ])
+
+    r = requests.get(endpoint, headers=headers, params=params )
+
+    if r.status_code != 200:
+      print(f"ERORR: Unable to get source code for path={path} and runId={runId}: Error code {r.status_code}")
+      print(r.text)
+
+    return r.text
+
+def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=False, events=False, source=False):
     dictionary = []
     issues_data = []
     issues_included = []
@@ -208,6 +245,7 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
 
     # loop over the list of issues
     for issue in issues_data:
+
         issueKey = issue['attributes']['issue-key']
         findingKey = issue['attributes']['finding-key']
         checker = issue['attributes']['sub-tool']
@@ -330,6 +368,72 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
             triage_total = triage_end - triage_start
             triage_total_es += triage_total.total_seconds()
 
+        if source:
+            headers = {'Authorization': 'Bearer ' + token,
+                       'Accept-Language': 'en'}
+
+            event_tree = getEventsWithSource(os.getenv("POLARIS_URL"), headers, findingKey, runId)
+
+            if (event_tree == None):
+                if (debug): print("DEBUG: Issue " + findingKey + " not found in run " + runId + ", skipping")
+                continue
+            else:
+                if (debug): print("DEBUG: Issue " + findingKey + " found in run " + runId)
+
+            events = event_tree['events']
+
+            main_file = event_tree['main-event-file-path'][-1]
+            main_loc = str(event_tree['main-event-line-number'])
+
+            print(json.dumps(issue, indent = 4, sort_keys=True))
+            ticket_body = ""
+            #         # iterate through included to get name, description, local-effect, issue-type
+            ticket_body = ticket_body + "### Coverity - " + name + " (CWE " + cwe + ") in    " +  main_file + "\n"
+            ticket_body = ticket_body + description + " " + local_effect + "\n"
+            fd = str(first_detected) + "\n"
+            ticket_body = ticket_body + "The issue was first detected on " + fd + "\n"
+            ticket_body = ticket_body + "\n"
+
+            currentFile = ""
+            for event in events:
+                eventNumber = str(event['event-number'])
+                if (event['path'][-1] == currentFile):
+                    currentFile = event['path'][-1]
+                else:
+                    ticket_body = ticket_body + "From " + event['path'][-1] + ": \n"
+                    currentFile = event['path'][-1]
+                currentFile = event['path'][-1]
+                if (debug): print("DEBUG: Event " + event['event-tag'] + " #" + eventNumber + " in " + event['filePath'])
+
+                if ('source-before' in event and event['source-before']):
+                    separate_lines = event['source-before']['source-code'].splitlines()
+                    ticket_body = ticket_body + "```\n"
+                    current_line_no = event['source-before']['start-line']
+                    for line in separate_lines:
+                        pre_line = "%5d %s\n" % (current_line_no, line)
+                        current_line_no = current_line_no + 1
+                        ticket_body = ticket_body + pre_line
+                    ticket_body = ticket_body + "\n```\n"
+                if (event['event-type'] == "MAIN"):
+                    ticket_body = ticket_body + "<span style=\"color:red\">" + "**" + "#" + eventNumber + ":    " + event['event-tag'] + ": " + event['event-description'] + "**" + "</span>\n"
+                elif (event['event-tag'] == "remediation"):
+                    ticket_body = ticket_body + "**" + "#" + eventNumber + ": " + event['event-tag'] + ": " + event['event-description'] + "**" + "\n"
+                else:
+                    ticket_body = ticket_body + "**" + "#" + eventNumber + ": " + event['event-tag'] + ": " + event['event-description'] + "**\n\n"
+                if ('source-after' in event and event['source-after']):
+                    separate_lines = event['source-after']['source-code'].splitlines()
+                    ticket_body = ticket_body + "```\n"
+                    current_line_no = event['source-after']['start-line']
+                    for line in separate_lines:
+                        pre_line = "%5d %s\n" % (current_line_no, line)
+                        current_line_no = current_line_no + 1
+                        ticket_body = ticket_body + pre_line
+                    ticket_body = ticket_body + "\n```\n"
+
+            if (debug): print("DEBUG: ticket body=\n" + ticket_body)
+
+            source_dct = {'markdown_comment': ticket_body}
+
         if events:
             events_start = datetime.now()
             # Added to grab line numbers as well
@@ -386,6 +490,8 @@ def getIssues(projectId, branchId, runId, limit=MAX_LIMIT, filter=None, triage=F
             entry.update(line_dct)
             entry.update(remediation_dct)
             entry.update(main_event_dct)
+        if source:
+            entry.update(source_dct)
 
         if (debug >= 5): print(entry)
         dictionary.append(entry)
@@ -428,7 +534,7 @@ latest_run = runs[0]
 
 runId = latest_run['runId']
 
-issues = getIssues(projectId, branchId, runId, events=True)
+issues = getIssues(projectId, branchId, runId, events=True, source=True)
 
 #        entry = {'projectId': projectId, 'branchId': branchId, \
 #             'issue-key': issueKey, 'finding-key': findingKey, \
@@ -442,68 +548,110 @@ issues = getIssues(projectId, branchId, runId, events=True)
 #             'closed_date': str(closed_date), \
 #             'age': age, 'ttr': ttr
 
-sast_report = dict()
-sast_report["version"] = "2.0"
-vulnerabilities = []
+sarif = {
+    "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+    "version": "2.1.0"
+}
 
+
+# First construct rules:
+#{
+#    "id": "3f292041e51d22005ce48f39df3585d44ce1b0ad",
+#    "name": "js/unused-local-variable",
+#    "shortDescription": {
+#        "text": "Unused variable, import, function or class"
+#    },
+#    "fullDescription": {
+#        "text": "Unused variables, imports, functions or classes may be a symptom of a bug and should be examined carefully."
+#    },
+#    "defaultConfiguration": {
+#        "level": "note"
+#    },
+#    "properties": {
+#        "tags": [
+#            "maintainability"
+#        ],
+#        "precision": "very-high"
+#    }
+#},
+
+sarif_rules = []
+sarif_checkers = dict()
 for issue in issues:
-    # Clear this field so it can be pretty-printed safely for debugging
-    issue['first_detected'] = 0
-    issue['closed_date'] = 0
-    issue['age'] = 0
-    issue['ttr'] = 0
+    if (issue["checker"] in sarif_checkers): continue
 
-    newIssue = dict()
-    newIssue["id"] = issue['issue-key']
-    newIssue["category"] = "sast"
-    newIssue["name"] = issue['name']
-    newIssue["message"] = issue['local_effect']
-    newIssue["description"] = issue['description']
-    newIssue["severity"] = issue['severity']
-    newIssue["confidence"] = "Medium" # TODO: Something else
-    scanner = dict()
-    scanner["id"] = "synopsys_coverity";
-    scanner["name"] = "Synopsys Coverity on Polaris";
-    newIssue["scanner"] = scanner;
+    rule = dict()
+    rule['id'] = issue["checker"]
+    rule['name'] = issue["checker"]
+    rule['shortDescription'] = { "text": issue['local_effect'] }
+    rule['fullDescription'] = { "text:": issue['description'] }
+    if (issue['severity'] == "high"):
+       rule['defaultConfiguration'] = "error"
+    elif (issue['severity'] == "moderate"):
+        rule['defaultConfiguration'] = "warning"
+    else:
+        rule['defaultConfiguration'] = "note"
+    rule['properties'] = {
+        "tags": [ "security" ],
+        "precision": "very-high"
+    }
 
-    location = dict();
-    location["file"] = issue['path']
-    location["start_line"] = issue['line']
-    location["end_line"] = issue['line']
-    # TODO: Break class and method into two pieces
-    location["class"] = "N/A"
-    location["method"] = "N/A"
+    sarif_rules.append(rule)
+    sarif_checkers[issue["checker"]] = 1
 
-    if "main_event" in issue:
-        newIssue["description"] = newIssue["description"] + issue["main_event"]
+sarif_tool = {
+    "driver": {
+        "name": "Synopsys Coverity on Polaris",
+        "semanticVersion": "1.0.0",
+        "rules": sarif_rules,
+    }
+}
 
-    if "remediation" in issue:
-        newIssue["description"] = newIssue["description"] + "\n\n" + issue["remediation"]
+sarif["runs"] = [
+    {
+        "tool": sarif_tool
+    }
+]
 
-    newIssue["location"] = location
+# Now set up results
+sarif_results = []
+for issue in issues:
+    result = dict()
+    result['ruleId'] = issue['checker']
+    result['message'] = { "text": issue['description'] }
+    if (issue['severity'] == "high"):
+       result['level'] = "error"
+    elif (issue['severity'] == "moderate"):
+        result['level'] = "warning"
+    else:
+        result['level'] = "note"
 
-    identifiers = []
-    identifiers_snps = dict()
-    identifiers_snps["type"] = "synopsys_coverity_type"
-    identifiers_snps["name"] = "Synopsys Coverity on Polaris-" + issue["checker"]
-    identifiers_snps["value"] = issue["checker"]
-    # TODO Include link to full issue report
-    identifiers_snps["url"] = "http://www.synopsys.com/"
-    identifiers.append(identifiers_snps)
-    identifiers_cwe = dict()
-    # Get first CWE
-    cwe = issue["cwe"].split(',', 1)[0]
-    identifiers_cwe["type"] = "cwe"
-    identifiers_snps["name"] = "CWE-" + cwe
-    identifiers_snps["value"] = cwe
-    identifiers_snps["url"] = "https://cwe.mitre.org/data/definitions/" + issue["cwe"] + ".html"
-    identifiers.append(identifiers_cwe)
+    result["locations"] = [
+        {
+            "physicalLocation": {
+                "artifactLocation": {
+                    "uri": issue['path']
+                    # uriBaseId do not use
+                },
+                "region": {
+                    "startLine": issue['line'],
+                    "startColumn": 0,
+                    "endLine": issue['line'],
+                    "endColumn": 0
+                }
+            }
+        }
+    ]
 
-    newIssue["identifiers"] = identifiers
+    result["partialFingerprints"] = {
+        "primaryLocationLineHash": issue["finding-key"]
+    }
 
-    vulnerabilities.append(newIssue)
+    sarif_results.append(result)
 
-sast_report["vulnerabilities"] = vulnerabilities
+sarif['results'] = sarif_results
+print("SARIF:")
+print(json.dumps(sarif, indent=4))
 
-with open('synopsys-gitlab-sast.json', 'w') as fp:
-  json.dump(sast_report, fp, indent=4)
+with open('synopsys-coverity-github-sarif.json', 'w') as fp:
+  json.dump(sarif, fp, indent=4)
