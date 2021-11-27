@@ -8,12 +8,13 @@ import jsonapi_requests
 from datetime import datetime
 from datetime import timedelta
 from urllib.parse import urlparse
-from _datetime import date
 import sys
 import os
 import argparse
 import urllib
 import glob
+
+from github import Github
 
 MAX_LIMIT = 500
 
@@ -538,6 +539,7 @@ if (debug): print(f"DEBUG: CLI Scan data:" + json.dumps(polaris_output, indent =
 issueApiUrl = polaris_output['scanInfo']['issueApiUrl']
 projectId = polaris_output['projectInfo']['projectId']
 branchId = polaris_output['projectInfo']['branchId']
+summaryUrl = polaris_output['issueSummary']['summaryUrl']
 
 polaris_url = os.getenv("POLARIS_URL")
 polaris_access_token = os.getenv("POLARIS_ACCESS_TOKEN")
@@ -718,3 +720,45 @@ print(json.dumps(sarif, indent=4))
 
 with open('synopsys-coverity-github-sarif.json', 'w') as fp:
   json.dump(sarif, fp, indent=4)
+
+# Test GitHub APIs
+
+#github_api_url = os.getenv("GITHUB_API_URL")
+#github_token = os.getenv("GITHUB_TOKEN")
+#github_repo = os.getenv("GITHUB_REPOSITORY")
+#github_sha = os.getenv("GITHUB_SHA")
+#if (github_api_url == None or github_token == None or github_repo == None or github_sha == None):
+#    print(f"ERROR: Must specificy GITHUB_API_URL, GITHUB_REPOSITORY, GITHUB_SHA and/or GITHUB_TOKEN environment variables")
+#    sys.exit(1)
+#
+#g = Github(github_token, base_url=github_api_url)
+#
+#if (debug): print(f"DEBUG: Look up GitHub repo '{github_repo}'")
+#repo = g.get_repo(github_repo)
+#if (debug): print(repo)
+#
+## Set to success and description if all good
+#status = repo.get_commit(sha=github_sha).create_status(
+#    state="error",
+#    target_url=summaryUrl,
+#    description="Failed due to new issues",
+#    context="Coverity on Polaris"
+#)
+#print(status)
+
+##check_run = repo.create_check_run(name="Coverity on Polaris", head_sha=github_sha)
+##print(check_run)
+
+
+
+
+
+
+  #const head_sha = getSha()
+#
+ # const response = await octokit.rest.checks.create({
+# owner: context.repo.owner,
+  #  repo: context.repo.repo,
+  #  name: CHECK_NAME,
+  #  head_sha
+  #})
