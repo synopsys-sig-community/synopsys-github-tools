@@ -55,6 +55,11 @@ if (comment_on_github_pr):
     github_head_ref = os.getenv("GITHUB_HEAD_REF")
     github_base_ref = os.getenv("GITHUB_BASE_REF")
 
+    print(f"github_repository={github_repository}")
+    print(f"github_sha={github_sha}")
+    print(f"github_head_ref={github_head_ref}")
+    print(f"github_base_ref={github_base_ref}")
+
     if (github_api_url == None or github_token == None or github_repository == None or github_head_ref == None or github_base_ref == None or github_sha == None):
         print(f"ERROR: Must specificy GITHUB_API_URL, GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_HEAD_REF, GITHUB_BASE_REF and/or GITHUB_TOKEN environment variables")
         sys.exit(1)
