@@ -70,10 +70,10 @@ if (comment_on_github_pr):
     github_repo = github.get_repo(github_repository)
     if (debug): print(github_repo)
 
-    if (debug): print(f"DEBUG: Look up GitHub ref '{github_head_ref}'")
+    if (debug): print(f"DEBUG: Look up GitHub ref 'heads/{github_head_ref}'")
     # Note to subtract the first 5 characters, "refs/" becuase the SDK will prepend that
     #ref = github_repo.get_git_ref(github_head_ref[5:])
-    ref = github_repo.get_git_ref(github_head_ref)
+    ref = github_repo.get_git_ref("heads/" + github_head_ref)
     if (debug): print(ref)
 
     github_sha = ref.object.sha
