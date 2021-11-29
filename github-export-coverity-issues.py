@@ -366,3 +366,7 @@ sarif["runs"] = [
 
 with open('synopsys-coverity-github-sarif.json', 'w') as fp:
   json.dump(sarif, fp, indent=4)
+
+if (len(polaris_merge_keys.keys()) > 0):
+    print(f"INFO: Found new incremental results, returning exit code 1")
+    sys.exit(1)
