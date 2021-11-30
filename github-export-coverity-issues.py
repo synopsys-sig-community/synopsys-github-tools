@@ -296,8 +296,11 @@ for issue in data["issues"]:
             #markdown_comment += f"Event #{comment_event2['number']} {comment_event2['tag']}: {comment_event2['description']}\n"
             j += 1
 
+
+        if (debug): print(f"DEBUG: Open source code file {comment_event['filename']}")
         source_code = open(comment_event['filename'])
         source_content = source_code.readlines()
+        source_code.close()
 
         markdown_comment += f"From {comment_event['filename']}:{comment_event['line']}:\n"
         markdown_comment += "```\n"
