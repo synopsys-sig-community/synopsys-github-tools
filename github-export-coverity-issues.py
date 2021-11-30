@@ -135,8 +135,6 @@ if (polaris):
     for new_issue in data:
         polaris_merge_keys[new_issue['mergeKey']] = True
 
-    print(polaris_merge_keys)
-
 # Process output from Coverity
 with open(coverity_json) as f:
   data = json.load(f)
@@ -373,10 +371,15 @@ sarif["runs"] = [
         "tool": sarif_tool,
         "results": sarif_results
     }
+
 ]
+
+print(f"INFO: Continuing 6...")
 
 with open('synopsys-coverity-github-sarif.json', 'w') as fp:
   json.dump(sarif, fp, indent=4)
+
+print(f"INFO: Continuing 7...")
 
 if (len(polaris_merge_keys.keys()) > 0):
     print(f"INFO: Found new incremental results, returning exit code 1")
