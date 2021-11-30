@@ -308,7 +308,8 @@ for issue in data["issues"]:
         if (begin_line < 0): begin_line = 0
         end_line = comment_event["line"] + 2
         if (end_line > len(source_content)): end_line = len(source_content)
-        line = begin_line +1
+        if (debug): print(f"DEBUG: Begin line={begin_line} end line={end_line}")
+        line = begin_line + 1
         for source_line in source_content[begin_line:end_line]:
             if (line == comment_event["line"]):
                 markdown_comment += f" {line:5d} {source_line}"
