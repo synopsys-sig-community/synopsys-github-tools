@@ -286,7 +286,7 @@ for issue in data["issues"]:
             markdown_comment += event_format_markdown(comment_event['number'], comment_event['tag'], comment_event['description'])
         #markdown_comment += f"Event #{comment_event['number']} {comment_event['tag']}: {comment_event['description']}\n"
         j = i + 1
-        comment_event2 = comment_events[j]
+        if (j < len(comment_events)): comment_event2 = comment_events[j]
         while j < len(comment_events) and comment_event2['has_source'] == False:
             comment_event2 = comment_events[j]
             if (truncate_security_results and is_security):
