@@ -181,6 +181,8 @@ for issue in data["issues"]:
     sarif_rules.append(rule)
     sarif_checkers[issue["checkerName"]] = 1
 
+print(f"INFO: Continuing 2...")
+
 sarif_tool = {
     "driver": {
         "name": "Synopsys Coverity on Polaris",
@@ -215,6 +217,9 @@ for issue in data["issues"]:
     ]
 
     indent = 0
+
+    print(f"INFO: Continuing 3...")
+
 
     markdown_comment = f"## Coverity Issue {issue['mergeKey']}: {issue['checkerName']} in {issue['functionDisplayName']} file {issue['strippedMainEventFilePathname']}:{issue['mainEventLineNumber']}\n"
     markdown_comment += f"{issue['checkerProperties']['subcategoryLongDescription']} {issue['checkerProperties']['subcategoryLocalEffect']}\n\n"
@@ -268,6 +273,8 @@ for issue in data["issues"]:
 
     is_security = is_security_result(comment_events)
 
+    print(f"INFO: Continuing 4...")
+
     # Loop through comment events and built pretty code presentation
     i = 0
     while i < len(comment_events):
@@ -310,6 +317,8 @@ for issue in data["issues"]:
         markdown_comment += "```\n\n"
 
         i = j
+
+    print(f"INFO: Continuing 5...")
 
     if (comment_on_github_pr):
         if (issue["mergeKey"] in coverity_issue_to_comment):
