@@ -298,12 +298,9 @@ for issue in data["issues"]:
 
 
         if (debug): print(f"DEBUG: Open source code file {comment_event['filename']}")
-        source_code = open(comment_event['filename'])
-        if (debug): print(f"DEBUG: Opened source code file {comment_event['filename']}")
-        source_content = source_code.readlines()
-        if (debug): print(f"DEBUG: Read lines")
-        source_code.close()
-        if (debug): print(f"DEBUG: Closed")
+        with open(comment_event['filename'], 'rU') as in_file:
+            source_content = in_file.readlines()
+        if (debug): print(f"DEBUG: Opened source code file {comment_event['filename']} and read lines")
 
         markdown_comment += f"From {comment_event['filename']}:{comment_event['line']}:\n"
         markdown_comment += "```\n"
