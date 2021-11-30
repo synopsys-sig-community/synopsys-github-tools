@@ -254,7 +254,7 @@ for issue in data["issues"]:
 
         # Gather events so we can group them in the comment
         comment_event = {
-            "filename": event['filePathname'],
+            "filename": event['strippedFilePathname'],
             "line": event["lineNumber"],
             "description": event["eventDescription"],
             "tag": event["eventTag"],
