@@ -7,6 +7,7 @@ import argparse
 import re
 import urllib
 import glob
+import traceback
 
 # Parse command line arguments
 from github import Github
@@ -298,8 +299,12 @@ for issue in data["issues"]:
 
 
         if (debug): print(f"DEBUG: Open source code file {comment_event['filename']}")
-        with open(comment_event['filename'], 'rU') as in_file:
-            source_content = in_file.readlines()
+        try:
+            with open(comment_event['filename'], 'rU') as in_file:
+                source_content = in_file.readlines()
+        except Exception:
+            traceback.print_exc()
+
         if (debug): print(f"DEBUG: Opened source code file {comment_event['filename']} and read lines")
 
         markdown_comment += f"From {comment_event['filename']}:{comment_event['line']}:\n"
