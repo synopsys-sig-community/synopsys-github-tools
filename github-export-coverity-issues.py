@@ -144,6 +144,8 @@ with open(coverity_json) as f:
 print(f"INFO: Reading incremental analysis results from {coverity_json}")
 if(debug): print("DEBUG: " + json.dumps(data, indent = 4, sort_keys=True) + "\n")
 
+print(f"INFO: Continuing...")
+
 markdown_comments = dict()
 
 sarif = {
