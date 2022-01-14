@@ -410,12 +410,16 @@ for issue in data['issues']['issues']:
     }
     if debug: print(f"DEBUG: Creating GitHub PR review comment params={params} body={body}")
     if 1:
-        r = requests.post(url = comment_post_url, headers = headers, params = params, data = json.dumps(body))
-        if (r.status_code > 250):
-            print(f"ERROR: Unable to create GitHub PR review comment:")
-            print(r.json())
-            sys.exit(1)
-        total_issues_commented += 1
+        try:
+            r = requests.post(url = comment_post_url, headers = headers, params = params, data = json.dumps(body))
+            if (r.status_code > 250):
+                print(f"ERROR: Unable to create GitHub PR review comment:")
+                print(r.json())
+                sys.exit(1)
+            total_issues_commented += 1
+        except:
+            print(f"INFO: Validation for comment failed, it must have not been included in commit")
+
 
 
 # Replace with policy based scan
