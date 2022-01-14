@@ -304,7 +304,7 @@ for issue in issues_to_comment_on:
 
     if debug: print(f"DEBUG: comment_body={comment_body}")
 
-    blame_ref = find_ref_for_line(filename, start_line)
+    blame_ref = find_ref_for_line(filename, start_line).replace('^', '')
     if blame_ref == None:
         print(f"WARNING: Unable to find reference for {filename}:{start_line}, skipping")
         continue
@@ -386,7 +386,7 @@ for issue in data['issues']['issues']:
 
     if debug: print(f"DEBUG: Comment body={comment_body}")
 
-    blame_ref = find_ref_for_line(filename, start_line)
+    blame_ref = find_ref_for_line(filename, start_line).replace('^', '')
     if blame_ref == None:
         print(f"WARNING: Unable to find reference for {filename}:{start_line}, skipping")
         continue
