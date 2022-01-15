@@ -233,22 +233,25 @@ for issue in issues_to_comment_on:
 
     start_line = issue['mainEventLineNumber']
 
-    checkerProps = issue['checkerProperties']
-    comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
-    # BAD_CERT_VERIFICATION: The "checkServerIdentity" property in the "tls.connect()" function uses bad cert verification.
-    comment_body += f"**{checkerProps['subcategoryLocalEffect']}**\n\n"
-
-    #    if (main_event_desc != None):
-    #    comment_body += f"{issue['checkerName']}: {main_event_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
-    #else:
-    #    comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
-
     events = issue['events']
     remediation = None
+    main_desc = None
     for event in events:
         print(f"DEBUG: event={event}")
         if event['remediation'] == True:
             remediation = event['eventDescription']
+        if event['main'] == True:
+            main_desc = event['eventDescription']
+
+    checkerProps = issue['checkerProperties']
+    comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
+    # BAD_CERT_VERIFICATION: The "checkServerIdentity" property in the "tls.connect()" function uses bad cert verification.
+    #comment_body += f"**{checkerProps['subcategoryLocalEffect']}**\n\n"
+
+    if (main_desc):
+        comment_body += f"{issue['checkerName']}: {main_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
+    else:
+        comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
 
     if remediation:
         comment_body += f"**How to fix:** {remediation}\n"
