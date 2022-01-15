@@ -229,14 +229,19 @@ for issue in issues_to_comment_on:
         if debug: print(f"DEBUG: File '{filename}' not in change set, ignoring")
         continue
 
-    if debug: print(f"DEBUG: File '{filename}' found in change set")
+    if debug: print(f"DEBUG: File '{filename}' found in change set (2)")
+
+    if debug: print(f"DEBUG: Test 0")
+
 
     start_line = issue['mainEventLineNumber']
 
     main_event_desc = None
     for event in issue['events']:
-        if event['mainx'] == True:
+        if event['main'] == True:
             main_event_desc = event['eventDescription']
+
+    if debug: print(f"DEBUG: Test 1")
 
     checkerProps = issue['checkerProperties']
     comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
@@ -246,12 +251,17 @@ for issue in issues_to_comment_on:
     else:
         comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
 
+    if debug: print(f"DEBUG: Test 2")
+
     events = issue['events']
     remediation = None
     for event in events:
         print(f"DEBUG: event={event}")
         if event['remediation'] == True:
             remediation = event['eventDescription']
+
+    if debug: print(f"DEBUG: Test 3")
+
 
     if remediation:
         comment_body += f"**How to fix:** {remediation}\n"
@@ -312,6 +322,7 @@ for issue in issues_to_comment_on:
     comment_body += f"<!-- Coverity {issue['mergeKey']} -->"
 
     if debug: print(f"DEBUG: comment_body={comment_body}")
+    sys.exit(1)
 
     blame_ref = find_ref_for_line(filename, start_line).replace('^', '')
     if blame_ref == None:
@@ -357,7 +368,7 @@ for issue in data['issues']['issues']:
         if debug: print(f"DEBUG: File '{filename}' not in change set, ignoring")
         continue
 
-    if debug: print(f"DEBUG: File '{filename}' found in change set")
+    if debug: print(f"DEBUG: File '{filename}' found in change set (1)")
 
     cwe = "N/A"
     if "cwe" in issue['taxonomies']:
