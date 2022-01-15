@@ -229,29 +229,19 @@ for issue in issues_to_comment_on:
         if debug: print(f"DEBUG: File '{filename}' not in change set, ignoring")
         continue
 
-    if debug: print(f"DEBUG: File '{filename}' found in change set (2)")
-
-    if debug: print(f"DEBUG: Test 0")
-
+    if debug: print(f"DEBUG: File '{filename}' found in change set")
 
     start_line = issue['mainEventLineNumber']
-
-    main_event_desc = None
-    for event in issue['events']:
-        if event['main'] == True:
-            main_event_desc = event['eventDescription']
-
-    if debug: print(f"DEBUG: Test 1")
 
     checkerProps = issue['checkerProperties']
     comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
     # BAD_CERT_VERIFICATION: The "checkServerIdentity" property in the "tls.connect()" function uses bad cert verification.
-    if (main_event_desc != None):
-        comment_body += f"{issue['checkerName']}: {main_event_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
-    else:
-        comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
+    comment_body += f"**{checkerProps['subcategoryLocalEffect']}**\n\n"
 
-    if debug: print(f"DEBUG: Test 2")
+    #    if (main_event_desc != None):
+    #    comment_body += f"{issue['checkerName']}: {main_event_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
+    #else:
+    #    comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
 
     events = issue['events']
     remediation = None
@@ -259,9 +249,6 @@ for issue in issues_to_comment_on:
         print(f"DEBUG: event={event}")
         if event['remediation'] == True:
             remediation = event['eventDescription']
-
-    if debug: print(f"DEBUG: Test 3")
-
 
     if remediation:
         comment_body += f"**How to fix:** {remediation}\n"
@@ -322,7 +309,6 @@ for issue in issues_to_comment_on:
     comment_body += f"<!-- Coverity {issue['mergeKey']} -->"
 
     if debug: print(f"DEBUG: comment_body={comment_body}")
-    sys.exit(1)
 
     blame_ref = find_ref_for_line(filename, start_line).replace('^', '')
     if blame_ref == None:
@@ -368,7 +354,7 @@ for issue in data['issues']['issues']:
         if debug: print(f"DEBUG: File '{filename}' not in change set, ignoring")
         continue
 
-    if debug: print(f"DEBUG: File '{filename}' found in change set (1)")
+    if debug: print(f"DEBUG: File '{filename}' found in change set")
 
     cwe = "N/A"
     if "cwe" in issue['taxonomies']:
