@@ -233,9 +233,18 @@ for issue in issues_to_comment_on:
 
     start_line = issue['mainEventLineNumber']
 
+    main_event_desc = None
+    for event in issue['events']:
+        if event['mainx'] == True:
+            main_event_desc = event['eventDescription']
+
     checkerProps = issue['checkerProperties']
     comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
-    comment_body += f"**{checkerProps['subcategoryLocalEffect']}**\n\n"
+    # BAD_CERT_VERIFICATION: The "checkServerIdentity" property in the "tls.connect()" function uses bad cert verification.
+    if (main_event_desc != None):
+        comment_body += f"{issue['checkerName']}: {main_event_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
+    else:
+        comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
 
     events = issue['events']
     remediation = None
