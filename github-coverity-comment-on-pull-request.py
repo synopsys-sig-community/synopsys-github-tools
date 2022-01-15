@@ -244,14 +244,14 @@ for issue in issues_to_comment_on:
             main_desc = event['eventDescription']
 
     checkerProps = issue['checkerProperties']
-    comment_body = f"Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity\n\n"
+    comment_body = f"**Coverity found issue: {checkerProps['subcategoryShortDescription']} - CWE-{checkerProps['cweCategory']}, {checkerProps['impact']} Severity**\n\n"
     # BAD_CERT_VERIFICATION: The "checkServerIdentity" property in the "tls.connect()" function uses bad cert verification.
     #comment_body += f"**{checkerProps['subcategoryLocalEffect']}**\n\n"
 
     if (main_desc):
-        comment_body += f"{issue['checkerName']}: {main_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
+        comment_body += f"**{issue['checkerName']}**: {main_desc} {checkerProps['subcategoryLocalEffect']}\n\n"
     else:
-        comment_body += f"{issue['checkerName']}: {checkerProps['subcategoryLocalEffect']}\n\n"
+        comment_body += f"**{issue['checkerName']}**: {checkerProps['subcategoryLocalEffect']}\n\n"
 
     if remediation:
         comment_body += f"**How to fix:** {remediation}\n"
@@ -363,8 +363,8 @@ for issue in data['issues']['issues']:
     if "cwe" in issue['taxonomies']:
         cwe = issue['taxonomies']['cwe'][0]
 
-    comment_body = f"Coverity Rapid Scan found issue: {issue['summary']} - CWE-{cwe}, {issue['severity']['impact']} Severity\n\n"
-    comment_body += f"**{issue['desc'].strip()}**\n\n"
+    comment_body = f"**Coverity Rapid Scan found issue: {issue['summary']} - CWE-{cwe}, {issue['severity']['impact']} Severity**\n\n"
+    comment_body += f"{issue['desc'].strip()}\n\n"
 
     comment_body += f"**How to fix:** {issue['remediation'].strip()}\n"
 
