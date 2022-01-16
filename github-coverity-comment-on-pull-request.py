@@ -182,7 +182,7 @@ if m:
 if debug: print(f"DEBUG: Pull request #{pull_number_for_sha}")
 
 if pull_number_for_sha == None:
-    print(f"ERROR: Unable to find pull request #{pull_number_for_sha}")
+    print(f"ERROR: Unable to find pull request #{pull_number_for_sha}, must be operating on a full analysis")
     sys.exit(1)
 
 pr = github_repo.get_pull(pull_number_for_sha)
@@ -339,9 +339,12 @@ for issue in issues_to_comment_on:
     if 1:
         r = requests.post(url = comment_post_url, headers = headers, params = params, data = json.dumps(body))
         if (r.status_code > 250):
-            print(f"ERROR: Unable to create GitHub PR review comment:")
-            print(r.json())
-            sys.exit(1)
+            if (r.json()['message'] == "Validation Failed"):
+                print(f"WARNING: Unable to validate comment on commit XXX, ignoring")
+            else:
+                print(f"ERROR: Unable to create GitHub PR review comment:")
+                print(r.json())
+                sys.exit(1)
         total_issues_commented += 1
 
 # Process output from Sigma
