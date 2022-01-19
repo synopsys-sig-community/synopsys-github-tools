@@ -129,7 +129,7 @@ if debug: print(f"DEBUG: merge_keys_seen_in_ref={merge_keys_seen_in_ref}")
 total_issues_commented = 0
 
 # Process output from Coverity
-with open(coverity_json) as f:
+with open(coverity_json, encoding='utf-8') as f:
   data = json.load(f)
 
 print(f"INFO: Reading incremental analysis results from {coverity_json}")
