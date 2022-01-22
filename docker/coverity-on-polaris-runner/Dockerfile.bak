@@ -1,0 +1,5 @@
+FROM openjdk:slim
+COPY --from=python:3.6-slim / /
+RUN apt-get -y install curl
+RUN python3 -m ensurepip
+RUN pip3 install --upgrade pip && pip3 install requests==2.26.0 urllib3==1.26.7 jsonapi-requests==0.6.2 tenacity==6.2.0
