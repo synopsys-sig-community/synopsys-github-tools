@@ -219,9 +219,44 @@ for commit in commits:
 
 if debug: print(f"DEBUG: File changes={file_changes}")
 
+# Get a list of all merge keys seen in analysis
+seen_in_analysis = dict()
+for issue in local_issues:
+    seen_in_analysis[issue['mergeKey']] = 1
+
+# Get list of review comments. If they are for an issue that has been fixed, close the review comment.
+review_comments = pr.get_comments()
+seen_in_comments = dict()
+for review_comment in review_comments:
+    if debug: print(f"DEBUG: Review comment={review_comment} body={review_comment.body}")
+
+    m = re.search('<!-- Coverity (.+?) -->', review_comment.body)
+    if m:
+        coverity_mk = m.group(1)
+        seen_in_comments[coverity_mk] = 1
+        if debug: print(f"DEBUG: Found Coverity comment for {coverity_mk}")
+        if coverity_mk not in seen_in_analysis:
+            print(f"DEBUG:  Not seen in analysis")
+
+            delete_comment_url = github_api_url + f"/repos/{github_repository}/pulls/comments/{review_comment.id}"
+            headers = {'Authorization': f'token {github_token}'}
+            params = {
+                "accept": "application/vnd.github.v3+json"
+            }
+            if debug: print(f"DEBUG: Deleting GitHub PR review comment url={delete_comment_url} params={params}")
+            if 1:
+                r = requests.delete(url=delete_comment_url, headers=headers, params=params)
+                if (r.status_code > 250):
+                        print(f"ERROR: Unable to delete GitHub PR review comment ({r.status_code}:")
+                        print(r.json())
+
 for issue in issues_to_comment_on:
     if debug: print(f"DEBUG: Comment on issue {issue}")
     filename = issue['strippedMainEventFilePathname']
+
+    if issue['mergeKey'] in seen_in_comments:
+        if debug: print(f"DEBUG: Merge key {issue['mergeKey']} already seen in comments, do not create another comment")
+        continue
 
     if issue['checkerName'].startswith("SIGMA"):
         if debug: print(f"DEBUG: Checker name '{issue['checkerName']}' begins with SIGMA, skipping")
@@ -357,6 +392,37 @@ with open(sigma_json) as f:
 print(f"INFO: Reading incremental analysis results from {sigma_json}")
 if(debug): print("DEBUG: " + json.dumps(data, indent = 4, sort_keys=True) + "\n")
 
+# Get a list of all merge keys seen in analysis
+seen_in_analysis = dict()
+for issue in data['issues']['issues']:
+    seen_in_analysis[issue['uuid']] = 1
+
+# Get list of review comments. If they are for an issue that has been fixed, close the review comment.
+review_comments = pr.get_comments()
+seen_in_comments = dict()
+for review_comment in review_comments:
+    if debug: print(f"DEBUG: Review comment={review_comment} body={review_comment.body}")
+
+    m = re.search('<!-- Sigma (.+?) -->', review_comment.body)
+    if m:
+        sigma_uuid = m.group(1)
+        seen_in_comments[sigma_uuid] = 1
+        if debug: print(f"DEBUG: Found Sigma comment for {sigma_uuid}")
+        if sigma_uuid not in seen_in_analysis:
+            print(f"DEBUG:  Not seen in analysis")
+
+            delete_comment_url = github_api_url + f"/repos/{github_repository}/pulls/comments/{review_comment.id}"
+            headers = {'Authorization': f'token {github_token}'}
+            params = {
+                "accept": "application/vnd.github.v3+json"
+            }
+            if debug: print(f"DEBUG: Deleting GitHub PR review comment url={delete_comment_url} params={params}")
+            if 1:
+                r = requests.delete(url=delete_comment_url, headers=headers, params=params)
+                if (r.status_code > 250):
+                        print(f"ERROR: Unable to delete GitHub PR review comment ({r.status_code}:")
+                        print(r.json())
+
 for issue in data['issues']['issues']:
     filename = issue['filepath']
     if filename not in file_changes:
@@ -364,6 +430,10 @@ for issue in data['issues']['issues']:
         continue
 
     if debug: print(f"DEBUG: File '{filename}' found in change set")
+
+    if issue['uuid'] in seen_in_comments:
+        if debug: print(f"DEBUG: UUID {issue['uuid']} already seen in comments, do not create another comment")
+        continue
 
     cwe = "N/A"
     if "cwe" in issue['taxonomies']:
@@ -401,6 +471,8 @@ for issue in data['issues']['issues']:
         comment_body += f"```suggestion\n" \
                         f"{suggestion}" \
                         f"```\n"
+
+        comment_body += f"<!-- Sigma {issue['uuid']} -->"
 
     if debug: print(f"DEBUG: Comment body={comment_body}")
 
